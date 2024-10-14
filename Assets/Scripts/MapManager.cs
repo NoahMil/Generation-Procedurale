@@ -1,10 +1,12 @@
 using System;using System.Collections;
 using System.Collections.Generic;
+using System.Drawing;
 using JetBrains.Annotations;
 using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Tilemaps;
+using Color = UnityEngine.Color;
 
 public enum StartBy
 {
@@ -23,11 +25,46 @@ public class MapManager : MonoBehaviour
     [SerializeField] private int mapHeight = 10;
     [SerializeField] private int seed;
     [SerializeField] private int iteration;
-
+    
 
     private System.Random _random;
     private Room _startingRoom;
     private List<Room> _allRooms;
+    private List<Vector2> _allRoomsCenters;
+    private Dictionary<Room, List<Room>> _allRoomsDictionary;
+
+    
+    #region BSP
+    [ContextMenu("BSP")]
+    private void BinarySpacePartitioning()
+    {
+        ResetRoomSeed();
+        
+        SplitRecursive(_allRooms, iteration);
+        
+        GenerateMap();
+        
+        CreateAllRoomsCenters(); 
+        
+        LogRoomData();
+        
+    }
+    private void CreateAllRoomsCenters()
+    {
+        _allRoomsCenters = new List<Vector2>();
+
+        foreach (Room room in _allRooms)
+        {
+            _allRoomsCenters.Add(room.CenterPosition);
+        }
+    }
+    private void LogRoomData()
+    {
+        foreach (Room room in _allRooms)
+        {
+            Debug.Log($"Room Position: {room.Position}, Width: {room.Width}, Height: {room.Height}, Center: {room.CenterPosition}");
+        }
+    }
 
     
     private void ResetRoomSeed()
@@ -37,16 +74,6 @@ public class MapManager : MonoBehaviour
         _startingRoom = new Room(mapWidth, mapHeight, new Vector2Int(0, 0));
         _allRooms.Add(_startingRoom);
         _random = new System.Random(seed);
-    }
-    
-    [ContextMenu("BSP")]
-    private void BinarySpacePartitioning()
-    {
-        ResetRoomSeed();
-        
-        SplitRecursive(_allRooms, iteration);
-        
-        GenerateMap();
     }
 
     private List<Room> Split(List<Room> rooms)
@@ -102,7 +129,22 @@ public class MapManager : MonoBehaviour
 
         return biggestRoom;
     }
+    #endregion
     
+    
+    private void OnDrawGizmos()
+    {
+        if (_allRoomsCenters == null) return; 
+
+        Gizmos.color = Color.red; 
+
+        foreach (Vector2 center in _allRoomsCenters)
+        {
+            Gizmos.DrawSphere(new Vector3(center.x, center.y, 0), 0.2f); 
+        }
+    }
+
+
     private void DrawRoom(List<Room> rooms)
     {
         foreach (Room room in rooms)
@@ -146,17 +188,16 @@ public class Room
     
     public Color Color { get; set; } 
     public Vector2Int Position { get; set; }
-    public Vector2Int CenterPosition
+    public Vector2 CenterPosition
     {
         get
         {
             int centerX = Position.x + Width / 2;
             int centerY = Position.y + Height / 2;
-            return new Vector2Int(centerX, centerY);
+            return new Vector2(centerX, centerY);
         }
+        set => throw new NotImplementedException();
     }
-    
-    
 
     public Room(int width, int height, Vector2Int position)
     {
