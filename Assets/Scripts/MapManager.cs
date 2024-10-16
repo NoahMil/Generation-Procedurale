@@ -34,6 +34,7 @@ public class MapManager : MonoBehaviour
     private List<Vector2> _allRoomsCenters;
     private Dictionary<Room, List<Room>> _allRoomsDictionary;
 
+
     /*
     public List<Triangle> BowyerWatson(List<Vector2> pointList)
     {
@@ -51,11 +52,11 @@ public class MapManager : MonoBehaviour
                 }
             }
             List<Edge> polygonEdges = new List<Edge>();
-            foreach (Triangle triangle in badTriangles)
+            foreach (Triangle badTriangle in badTriangles)
             {
-                polygonEdges.Add(new Edge(triangle.Point1, triangle.Point2));
-                polygonEdges.Add(new Edge(triangle.Point1, triangle.Point3));
-                polygonEdges.Add(new Edge(triangle.Point2, triangle.Point3));
+                polygonEdges.Add(new Edge(badTriangle.Point1, badTriangle.Point2));
+                polygonEdges.Add(new Edge(badTriangle.Point1, badTriangle.Point3));
+                polygonEdges.Add(new Edge(badTriangle.Point2, badTriangle.Point3));
             }
             badTriangles.Clear();
 
@@ -69,6 +70,7 @@ public class MapManager : MonoBehaviour
         return triangulation;
     }
     */
+    
     
     public List<Triangle> BowyerWatson(List<Vector2> pointList)
 {
