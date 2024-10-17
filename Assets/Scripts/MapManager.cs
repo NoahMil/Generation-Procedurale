@@ -33,58 +33,19 @@ public class MapManager : MonoBehaviour
     private List<Room> _allRooms;
     private List<Vector2> _allRoomsCenters;
     private Dictionary<Room, List<Room>> _allRoomsDictionary;
-    
-    public List<Triangle> BowyerWatson(List<Vector2> pointList)
-    {
-        List<Triangle> triangulation = new List<Triangle>();
-        CreateSuperTriangle();
-        triangulation.Add(CreateSuperTriangle());
-        foreach (Vector2 point in pointList)
-        {
-            List<Triangle> badTriangles = new List<Triangle>();
-            foreach (Triangle triangle in triangulation)
-            {
-                if (triangle.IsPointInCircumcircle(point))
-                {
-                    badTriangles.Add(triangle);
-                }
-            }
-            List<Edge> polygonEdges = new List<Edge>();
-            foreach (Triangle badTriangle in badTriangles)
-            {
-                polygonEdges.Add(new Edge(badTriangle.Point1, badTriangle.Point2));
-                polygonEdges.Add(new Edge(badTriangle.Point1, badTriangle.Point3));
-                polygonEdges.Add(new Edge(badTriangle.Point2, badTriangle.Point3));
-            }
-            badTriangles.Clear();
+    private List<Triangle> _triangulation;
 
-            foreach (Edge edge in polygonEdges)
-            {
-                Triangle newTriangle = new Triangle(edge.Point1, edge.Point2, point);
-                triangulation.Add(newTriangle);
-            }
-        }
-        
-        return triangulation;
-    }
-    
-    
-    /* CHAT GPT
-    public List<Triangle> BowyerWatson(List<Vector2> pointList)
+
+    private List<Triangle> BowyerWatson(List<Vector2> pointList)
 {
-    List<Triangle> triangulation = new List<Triangle>();
-    
-    // Step 1: Create the super-triangle and add it to the triangulation.
+    _triangulation = new List<Triangle>();
     Triangle superTriangle = CreateSuperTriangle();
-    triangulation.Add(superTriangle);
+    _triangulation.Add(superTriangle);
 
-    // Step 2: Insert each point one by one.
     foreach (Vector2 point in pointList)
     {
         List<Triangle> badTriangles = new List<Triangle>();
-
-        // Find all triangles that are invalid due to the insertion of this point.
-        foreach (Triangle triangle in triangulation)
+        foreach (Triangle triangle in _triangulation)
         {
             if (triangle.IsPointInCircumcircle(point))
             {
@@ -92,7 +53,6 @@ public class MapManager : MonoBehaviour
             }
         }
 
-        // Step 3: Identify the polygonal hole boundary (edges not shared by any bad triangles).
         List<Edge> polygonEdges = new List<Edge>();
         foreach (Triangle badTriangle in badTriangles)
         {
@@ -104,43 +64,38 @@ public class MapManager : MonoBehaviour
 
             foreach (Edge edge in edges)
             {
-                // Add edge to polygonEdges only if it’s not shared.
-                if (!polygonEdges.Contains(edge))
+                if (polygonEdges.Contains(edge) || polygonEdges.Contains(new Edge(edge.Point2, edge.Point1)))
                 {
-                    polygonEdges.Add(edge);
+                    polygonEdges.Remove(edge);
                 }
                 else
                 {
-                    // If the edge is shared, remove it from polygonEdges.
-                    polygonEdges.Remove(edge);
+                    polygonEdges.Add(edge);
                 }
             }
         }
 
-        // Step 4: Remove all the bad triangles from the triangulation.
         foreach (Triangle badTriangle in badTriangles)
         {
-            triangulation.Remove(badTriangle);
+            _triangulation.Remove(badTriangle);
         }
 
-        // Step 5: Re-triangulate the polygonal hole.
         foreach (Edge edge in polygonEdges)
         {
             Triangle newTriangle = new Triangle(edge.Point1, edge.Point2, point);
-            triangulation.Add(newTriangle);
+            _triangulation.Add(newTriangle);
         }
     }
 
-    // Step 6: Remove triangles that contain vertices of the super-triangle.
-    triangulation.RemoveAll(triangle =>
+    _triangulation.RemoveAll(triangle =>
         triangle.Point1 == superTriangle.Point1 || triangle.Point1 == superTriangle.Point2 || triangle.Point1 == superTriangle.Point3 ||
         triangle.Point2 == superTriangle.Point1 || triangle.Point2 == superTriangle.Point2 || triangle.Point2 == superTriangle.Point3 ||
         triangle.Point3 == superTriangle.Point1 || triangle.Point3 == superTriangle.Point2 || triangle.Point3 == superTriangle.Point3
     );
 
-    return triangulation;
+    return _triangulation;
 }
-*/
+
 
     private void CreateAllRoomsCenters()
     {
@@ -160,14 +115,11 @@ public class MapManager : MonoBehaviour
         Triangle superTriangle = new Triangle(pointTop, pointLeft, pointRight);
         return superTriangle;
     }
-    
 
-    private void LogRoomData()
+    [ContextMenu("Generate BowyerWatson")]
+    private void GenerateBowyerWatson()
     {
-        foreach (Room room in _allRooms)
-        {
-            Debug.Log($"Room Position: {room.Position}, Width: {room.Width}, Height: {room.Height}, Center: {room.CenterPosition}");
-        }
+        _triangulation = BowyerWatson(_allRoomsCenters);
     }
     
     #region BSP
@@ -181,9 +133,6 @@ public class MapManager : MonoBehaviour
         GenerateMap();
         
         CreateAllRoomsCenters();
-        
-        LogRoomData();
-        
     }
 
     
@@ -252,9 +201,10 @@ public class MapManager : MonoBehaviour
     #endregion
 
 
+    
     private void OnDrawGizmos()
     {
-        if (_allRoomsCenters == null) return;
+        if (_allRoomsCenters == null || _triangulation == null) return;
 
         Gizmos.color = Color.red;
         foreach (Vector2 center in _allRoomsCenters)
@@ -262,26 +212,11 @@ public class MapManager : MonoBehaviour
             Gizmos.DrawSphere(new Vector3(center.x, center.y, 0), 0.2f);
         }
 
-        Gizmos.color = Color.blue;
-        DrawTriangle(CreateSuperTriangle());
-        
-        Gizmos.color = Color.green;
-        
-        DrawCircleGizmo(CreateSuperTriangle().Circumcenter, CreateSuperTriangle().Circumradius);
-
-    }
-    
-    private void DrawCircleGizmo(Vector2 center, float radius, int segments = 50)
-    {
-        float angle = 0f;
-        Vector3 prevPoint = new Vector3(center.x + radius, center.y, 0);
-
-        for (int i = 0; i <= segments; i++)
+        foreach (Triangle triangle in _triangulation)
         {
-            angle += 2 * Mathf.PI / segments;
-            Vector3 newPoint = new Vector3(center.x + Mathf.Cos(angle) * radius, center.y + Mathf.Sin(angle) * radius, 0);
-            Gizmos.DrawLine(prevPoint, newPoint);
-            prevPoint = newPoint;
+            Gizmos.color = Color.black;
+            DrawTriangle(triangle);
+            
         }
     }
     
@@ -360,15 +295,14 @@ public class Triangle
     public Vector2 Point2 { get; set; }
     public Vector2 Point3 { get; set; }
 
-    public Vector2 Circumcenter { get; private set; }
-    public float Circumradius { get; private set; }
+    private Vector2 Circumcenter { get; set; }
+    private float Circumradius { get; set; }
 
     public Triangle(Vector2 point1, Vector2 point2, Vector2 point3)
     {
         Point1 = point1;
         Point2 = point2;
         Point3 = point3;
-        
         CalculateCircumcircle();
         
     }
@@ -395,17 +329,18 @@ public class Triangle
         float dx = point.x - Circumcenter.x;
         float dy = point.y - Circumcenter.y;
         float radiusSquared = Circumradius * Circumradius;
+        bool isInCircumcircle = (dx * dx + dy * dy) <= radiusSquared;
 
-        return dx * dx + dy * dy <= radiusSquared;
+        return isInCircumcircle;
     }
+
 }
 
 public class Edge
 {
     public Vector2 Point1 { get; private set; }
-    
     public Vector2 Point2 { get; private set; }
-    public float Length { get; private set; } 
+    public float Length { get; private set; }
 
     public Edge(Vector2 point1, Vector2 point2)
     {
@@ -413,5 +348,23 @@ public class Edge
         Point2 = point2;
         Length = Vector2.Distance(point1, point2);
     }
+
+    public override bool Equals(object obj)
+    {
+        if (obj is Edge otherEdge) // Vérifie si l'object vérifié est un autre edge
+        {
+            return (Point1 == otherEdge.Point1 && Point2 == otherEdge.Point2) || // Compare les points de l'edge actuel et de l'autre
+                   (Point1 == otherEdge.Point2 && Point2 == otherEdge.Point1);
+        }
+        return false;
+    }
+
+    public override int GetHashCode() // S'assure du bon ordre des points
+    {
+        int hash1 = Point1.GetHashCode() ^ Point2.GetHashCode();
+        int hash2 = Point2.GetHashCode() ^ Point1.GetHashCode();
+        return hash1 ^ hash2;
+    }
 }
+
 
