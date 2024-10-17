@@ -21,7 +21,7 @@ public class MapManager : MonoBehaviour
     [SerializeField] private Tilemap tilemap;
     [SerializeField] private Tile tile;
     
-    [Header("Stats")]
+    [Header("Variables")]
     [SerializeField] private int mapWidth = 10;
     [SerializeField] private int mapHeight = 10;
     [SerializeField] private int margin;
@@ -33,9 +33,7 @@ public class MapManager : MonoBehaviour
     private List<Room> _allRooms;
     private List<Vector2> _allRoomsCenters;
     private Dictionary<Room, List<Room>> _allRoomsDictionary;
-
-
-    /*
+    
     public List<Triangle> BowyerWatson(List<Vector2> pointList)
     {
         List<Triangle> triangulation = new List<Triangle>();
@@ -69,9 +67,9 @@ public class MapManager : MonoBehaviour
         
         return triangulation;
     }
-    */
     
     
+    /* CHAT GPT
     public List<Triangle> BowyerWatson(List<Vector2> pointList)
 {
     List<Triangle> triangulation = new List<Triangle>();
@@ -142,6 +140,7 @@ public class MapManager : MonoBehaviour
 
     return triangulation;
 }
+*/
 
     private void CreateAllRoomsCenters()
     {
@@ -184,7 +183,6 @@ public class MapManager : MonoBehaviour
         CreateAllRoomsCenters();
         
         LogRoomData();
-        
         
     }
 
