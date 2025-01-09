@@ -166,13 +166,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 223e62c3c89d5ed4482a9cd8256592ed, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tilemap: {fileID: 1157412368}
-  tile: {fileID: 11400000, guid: cdf066eab8ba6d645ab5f386786b21d8, type: 2}
-  mapWidth: 50
-  mapHeight: 50
-  margin: 20
-  seed: 22222
-  iteration: 7
+  _tilemap: {fileID: 1157412368}
+  _tile: {fileID: 11400000, guid: cdf066eab8ba6d645ab5f386786b21d8, type: 2}
+  _mapWidth: 10
+  _mapHeight: 10
+  _margin: 0
+  _seed: 0
+  _iteration: 0
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0

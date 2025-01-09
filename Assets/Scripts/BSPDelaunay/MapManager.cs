@@ -6,6 +6,7 @@ using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.Serialization;
 using UnityEngine.Tilemaps;
 using Color = UnityEngine.Color;
 
@@ -18,15 +19,15 @@ public enum StartBy
 public class MapManager : MonoBehaviour
 {
     [Header("References")]
-    [SerializeField] private Tilemap tilemap;
-    [SerializeField] private Tile tile;
+    [SerializeField] private Tilemap _tilemap;
+    [SerializeField] private Tile _tile;
     
     [Header("Variables")]
-    [SerializeField] private int mapWidth = 10;
-    [SerializeField] private int mapHeight = 10;
-    [SerializeField] private int margin;
-    [SerializeField] private int seed;
-    [SerializeField] private int iteration;
+    [SerializeField] private int _mapWidth = 10;
+    [SerializeField] private int _mapHeight = 10;
+    [SerializeField] private int _margin;
+    [SerializeField] private int _seed;
+    [SerializeField] private int _iteration;
     
     private System.Random _random;
     private Room _startingRoom;
@@ -109,9 +110,9 @@ public class MapManager : MonoBehaviour
     
     private Triangle CreateSuperTriangle()
     {
-        Vector2 pointTop = new Vector2(0.5f * mapWidth, 2 * mapHeight + margin);
-        Vector2 pointLeft = new Vector2(-2 * mapWidth, -2 * mapHeight - margin);
-        Vector2 pointRight = new Vector2(2 * mapWidth + mapHeight, -2 * mapHeight - margin);
+        Vector2 pointTop = new Vector2(0.5f * _mapWidth, 2 * _mapHeight + _margin);
+        Vector2 pointLeft = new Vector2(-2 * _mapWidth, -2 * _mapHeight - _margin);
+        Vector2 pointRight = new Vector2(2 * _mapWidth + _mapHeight, -2 * _mapHeight - _margin);
         Triangle superTriangle = new Triangle(pointTop, pointLeft, pointRight);
         return superTriangle;
     }
@@ -128,7 +129,7 @@ public class MapManager : MonoBehaviour
     {
         ResetRoomSeed();
         
-        SplitRecursive(_allRooms, iteration);
+        SplitRecursive(_allRooms, _iteration);
         
         GenerateMap();
         
@@ -140,9 +141,9 @@ public class MapManager : MonoBehaviour
     {
         _allRooms = new List<Room>();
         _allRooms.Clear();
-        _startingRoom = new Room(mapWidth, mapHeight, new Vector2Int(0, 0));
+        _startingRoom = new Room(_mapWidth, _mapHeight, new Vector2Int(0, 0));
         _allRooms.Add(_startingRoom);
-        _random = new System.Random(seed);
+        _random = new System.Random(_seed);
     }
 
     private List<Room> Split(List<Room> rooms)
@@ -243,9 +244,9 @@ public class MapManager : MonoBehaviour
                 for (int y = 0; y < room.Height; y++)
                 {
                     Vector3Int tilePosition = new Vector3Int(room.Position.x + x, room.Position.y + y, 0);
-                    tilemap.SetTile(tilePosition, tile);
-                    tilemap.SetTileFlags(tilePosition, TileFlags.None);
-                    tilemap.SetColor(tilePosition, room.Color);
+                    _tilemap.SetTile(tilePosition, _tile);
+                    _tilemap.SetTileFlags(tilePosition, TileFlags.None);
+                    _tilemap.SetColor(tilePosition, room.Color);
                 }
             }
         }
@@ -253,7 +254,7 @@ public class MapManager : MonoBehaviour
     
     private void GenerateMap()
     {
-        tilemap.ClearAllTiles();
+        _tilemap.ClearAllTiles();
         DrawRoom(_allRooms);
     }
 }
